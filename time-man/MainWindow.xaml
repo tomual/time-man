@@ -8,6 +8,6 @@
         Title="MainWindow" Height="350" Width="525">
     <Grid>
         <Button Content="Show Notification" HorizontalAlignment="Left" Margin="113,199,0,0" VerticalAlignment="Top" Click="Button_Click"/>
-        <Button Content="Create File" HorizontalAlignment="Left" Margin="355,199,0,0" VerticalAlignment="Top"/>
+        <Button Content="Create File" HorizontalAlignment="Left" Margin="355,199,0,0" VerticalAlignment="Top" Click="Button_Click_1"/>
     </Grid>
 </Window>

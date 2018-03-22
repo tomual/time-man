@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -42,6 +44,20 @@ namespace time_man
         {
             notifyIcon.ShowBalloonTip(1, "Hello World", "Description message", ToolTipIcon.Info);
             Console.WriteLine("Show a notification");
+        }
+
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            e.Cancel = true;
+            this.Hide();
+            base.OnClosing(e);
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            String filename = "Data/" + DateTime.Now.ToString("yyyyddM-HHmmss") + ".txt";
+            String contents = DateTime.Now.ToLongTimeString();
+            File.WriteAllText(filename, contents);
         }
     }
 }
