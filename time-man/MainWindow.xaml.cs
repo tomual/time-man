@@ -24,11 +24,13 @@ namespace time_man
     public partial class MainWindow : Window
     {
         NotifyIcon notifyIcon;
+        String filename;
 
         public MainWindow()
         {
             InitializeComponent();
 
+            filename = "Data/data.txt";
             notifyIcon = new NotifyIcon();
             notifyIcon.Icon = new System.Drawing.Icon("Resources/dolphin.ico");
             notifyIcon.Visible = true;
@@ -38,6 +40,12 @@ namespace time_man
                     this.Show();
                     this.WindowState = WindowState.Normal;
                 };
+
+            if (File.Exists(filename))
+            {
+                String data = File.ReadAllText(filename);
+                display.Text = data;
+            }
         }
 
         private void Button_Click(object sender, RoutedEventArgs e)
@@ -55,8 +63,7 @@ namespace time_man
 
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
-            String filename = "Data/" + DateTime.Now.ToString("yyyyddM-HHmmss") + ".txt";
-            String contents = DateTime.Now.ToLongTimeString();
+            String contents = textBox.Text;
             File.WriteAllText(filename, contents);
         }
     }

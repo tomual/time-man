@@ -7,7 +7,9 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <Button Content="Show Notification" HorizontalAlignment="Left" Margin="113,199,0,0" VerticalAlignment="Top" Click="Button_Click"/>
-        <Button Content="Create File" HorizontalAlignment="Left" Margin="355,199,0,0" VerticalAlignment="Top" Click="Button_Click_1"/>
+        <Button Content="Show Notification" HorizontalAlignment="Left" Margin="409,283,0,0" VerticalAlignment="Top" Click="Button_Click" Height="26"/>
+        <Button Content="Create File" HorizontalAlignment="Left" Margin="409,255,0,0" VerticalAlignment="Top" Click="Button_Click_1" Width="98" Height="23"/>
+        <TextBlock x:Name="display" HorizontalAlignment="Left" Margin="238,124,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top"/>
+        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="284,255,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
     </Grid>
 </Window>
