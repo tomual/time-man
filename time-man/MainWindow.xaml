@@ -7,9 +7,21 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <Button Content="Show Notification" HorizontalAlignment="Left" Margin="409,283,0,0" VerticalAlignment="Top" Click="Button_Click" Height="26"/>
-        <Button Content="Create File" HorizontalAlignment="Left" Margin="409,255,0,0" VerticalAlignment="Top" Click="Button_Click_1" Width="98" Height="23"/>
-        <TextBlock x:Name="display" HorizontalAlignment="Left" Margin="238,124,0,0" TextWrapping="Wrap" Text="TextBlock" VerticalAlignment="Top"/>
-        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="23" Margin="284,255,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+        <Button Content="Show Notification" HorizontalAlignment="Left" Margin="409,283,0,0" VerticalAlignment="Top" Click="showNotification" Height="26"/>
+        <Button Content="Add Item" HorizontalAlignment="Left" Margin="409,255,0,0" VerticalAlignment="Top" Click="buttonAddItem" Width="98" Height="23"/>
+        <TextBox x:Name="labelTextBox" HorizontalAlignment="Left" Height="23" Margin="159,255,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+        <ListView x:Name="listView" HorizontalAlignment="Left" Height="107" Margin="81,60,0,0" VerticalAlignment="Top" Width="356">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn Header="Active" Width="120" DisplayMemberBinding="{Binding Active}" />
+                    <GridViewColumn Header="Time" Width="50" DisplayMemberBinding="{Binding Time}" />
+                    <GridViewColumn Header="Label" Width="150" DisplayMemberBinding="{Binding Label}" />
+                </GridView>
+            </ListView.View>
+            <Grid Height="100" Width="346"/>
+        </ListView>
+        <TextBox x:Name="timeTextBox" HorizontalAlignment="Left" Height="23" Margin="284,255,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
+        <Button Content="Print Table" HorizontalAlignment="Left" Margin="409,227,0,0" VerticalAlignment="Top" Click="buttonReadSchedule" Width="98" Height="23"/>
+        <Button Content="Delete" HorizontalAlignment="Left" Margin="339,172,0,0" VerticalAlignment="Top" Click="deleteSelected" Width="98" Height="23"/>
     </Grid>
 </Window>
