@@ -7,7 +7,7 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <Button Content="Show Notification" HorizontalAlignment="Left" Margin="409,283,0,0" VerticalAlignment="Top" Click="showNotification" Height="26"/>
+        <Button Content="Show Notification" HorizontalAlignment="Left" Margin="409,283,0,0" VerticalAlignment="Top" Click="buttonShowNotification" Height="26"/>
         <Button Content="Add Item" HorizontalAlignment="Left" Margin="409,255,0,0" VerticalAlignment="Top" Click="buttonAddItem" Width="98" Height="23"/>
         <TextBox x:Name="labelTextBox" HorizontalAlignment="Left" Height="23" Margin="159,255,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
         <ListView x:Name="listView" HorizontalAlignment="Left" Height="107" Margin="81,60,0,0" VerticalAlignment="Top" Width="356">

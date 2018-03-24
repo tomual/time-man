@@ -17,6 +17,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Windows.Threading;
 
 namespace time_man
 {
@@ -29,6 +30,7 @@ namespace time_man
         String filename;
         ObservableCollection<ScheduleItem> items;
         SQLiteConnection db;
+        DispatcherTimer dispatcherTimer;
 
         public MainWindow()
         {
@@ -63,6 +65,27 @@ namespace time_man
                     this.Show();
                     this.WindowState = WindowState.Normal;
                 };
+
+            dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
+            dispatcherTimer.Tick += new EventHandler(tick);
+            dispatcherTimer.Interval = new TimeSpan(0, 0, 5);
+            dispatcherTimer.Start();
+
+        }
+
+        private void tick(object sender, EventArgs e)
+        {
+            foreach(var item in items)
+            {
+                Console.WriteLine("ITEM: " + item.Time);
+                Console.WriteLine("NOW: " + DateTime.Now.ToString("hhmm"));
+                
+                if(item.Time.ToString().Equals(DateTime.Now.ToString("hhmm")))
+                {
+                    showNotification();
+                }
+
+            }
         }
 
         private void initDatabase()
@@ -98,10 +121,11 @@ namespace time_man
             while (reader.Read())
             {
                 Console.WriteLine(String.Format("{0} {1} {2}", reader["active"], reader["time"], reader["label"]));
+                long id = long.Parse(reader["Id"].ToString());
                 String label = reader["label"].ToString();
                 int time = int.Parse(reader["time"].ToString());
                 bool active = reader["active"].Equals("1") ? true : false;
-                ScheduleItem scheduleItem = new ScheduleItem() { Label = label, Time = time, Active = true };
+                ScheduleItem scheduleItem = new ScheduleItem() { Id = id, Label = label, Time = time, Active = true };
 
                 items.Add(scheduleItem);
             }
@@ -118,7 +142,12 @@ namespace time_man
             }
         }
 
-        private void showNotification(object sender, RoutedEventArgs e)
+        private void buttonShowNotification(object sender, RoutedEventArgs e)
+        {
+            showNotification();
+        }
+
+        private void showNotification()
         {
             notifyIcon.ShowBalloonTip(1, "Hello World", "Description message", ToolTipIcon.Info);
             Console.WriteLine("Show a notification");
