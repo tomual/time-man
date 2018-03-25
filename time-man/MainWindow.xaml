@@ -5,23 +5,44 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:time_man"
         mc:Ignorable="d"
-        Title="MainWindow" Height="350" Width="525">
+        Title="MainWindow" Height="427.667" Width="390.501">
+    <Window.Resources>
+        <local:BoolToStringConverter x:Key="BoolToStringConverter" />
+    </Window.Resources>
     <Grid>
-        <Button Content="Show Notification" HorizontalAlignment="Left" Margin="409,283,0,0" VerticalAlignment="Top" Click="buttonShowNotification" Height="26"/>
-        <Button Content="Add Item" HorizontalAlignment="Left" Margin="409,255,0,0" VerticalAlignment="Top" Click="buttonAddItem" Width="98" Height="23"/>
-        <TextBox x:Name="labelTextBox" HorizontalAlignment="Left" Height="23" Margin="159,255,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
-        <ListView x:Name="listView" HorizontalAlignment="Left" Height="107" Margin="81,60,0,0" VerticalAlignment="Top" Width="356">
+        <ListView x:Name="listView" HorizontalAlignment="Left" Height="227" Margin="10,41,0,0" VerticalAlignment="Top" Width="358">
             <ListView.View>
                 <GridView>
-                    <GridViewColumn Header="Active" Width="120" DisplayMemberBinding="{Binding Active}" />
-                    <GridViewColumn Header="Time" Width="50" DisplayMemberBinding="{Binding Time}" />
-                    <GridViewColumn Header="Label" Width="150" DisplayMemberBinding="{Binding Label}" />
+                    <GridViewColumn Header="Time" Width="50" DisplayMemberBinding="{Binding Time, StringFormat=hh\\:mm}" />
+                    <GridViewColumn Header="Label" Width="250" DisplayMemberBinding="{Binding Label}" />
+                    <GridViewColumn Header="Active" Width="45" DisplayMemberBinding="{Binding Active, Converter={StaticResource BoolToStringConverter},
+                                       ConverterParameter='✔;'}" />
                 </GridView>
             </ListView.View>
             <Grid Height="100" Width="346"/>
         </ListView>
-        <TextBox x:Name="timeTextBox" HorizontalAlignment="Left" Height="23" Margin="284,255,0,0" TextWrapping="Wrap" Text="TextBox" VerticalAlignment="Top" Width="120"/>
-        <Button Content="Print Table" HorizontalAlignment="Left" Margin="409,227,0,0" VerticalAlignment="Top" Click="buttonReadSchedule" Width="98" Height="23"/>
-        <Button Content="Delete" HorizontalAlignment="Left" Margin="339,172,0,0" VerticalAlignment="Top" Click="deleteSelected" Width="98" Height="23"/>
+        <Button Content="Remove" HorizontalAlignment="Left" Margin="293,273,0,0" VerticalAlignment="Top" Click="deleteSelected" Width="75" Height="23"/>
+        <Label Content="Scheduled Items" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+        <Button Content="Toggle Active" HorizontalAlignment="Left" Margin="189,273,0,0" VerticalAlignment="Top" Click="toggleActiveSelected" Width="99" Height="23"/>
+        <GroupBox Header="Add Item" HorizontalAlignment="Left" Height="77" Margin="10,301,0,0" VerticalAlignment="Top" Width="358">
+            <Grid HorizontalAlignment="Left" Height="76" Margin="-6,-6,-2,-15" VerticalAlignment="Top" Width="354">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="69*"/>
+                    <ColumnDefinition Width="174*"/>
+                    <ColumnDefinition Width="94*"/>
+                </Grid.ColumnDefinitions>
+                <Button Content="Add" HorizontalAlignment="Right" Margin="0,32,10,0" VerticalAlignment="Top" Click="buttonAddItem" Width="53" Height="23" Grid.Column="2"/>
+                <TextBox x:Name="labelTextBox" HorizontalAlignment="Left" Height="23" Margin="10,32,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="193" Grid.ColumnSpan="2"/>
+                <TextBox x:Name="hourTextBox" MaxLength="2" HorizontalAlignment="Left" Height="23" Margin="143,32,0,0" TextWrapping="Wrap" Text="12" VerticalAlignment="Top" Width="29" RenderTransformOrigin="1.444,0.348" Grid.Column="1"/>
+                <Label Content="Name" HorizontalAlignment="Left" Margin="10,9,0,0" VerticalAlignment="Top"/>
+                <Label Content="Time" HorizontalAlignment="Left" Margin="143,9,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.454,0.577" Grid.Column="1"/>
+                <TextBox x:Name="minuteTextBox" MaxLength="2" HorizontalAlignment="Left" Height="23" Margin="181,32,0,0" TextWrapping="Wrap" Text="00" VerticalAlignment="Top" Width="29" RenderTransformOrigin="1.444,0.348" Grid.Column="1" Grid.ColumnSpan="2"/>
+                <Label Content=":" HorizontalAlignment="Left" Margin="170,28,0,0" VerticalAlignment="Top" RenderTransformOrigin="-0.454,0.577" Grid.Column="1"/>
+            </Grid>
+        </GroupBox>
+        <Button Content="Print Table" HorizontalAlignment="Left" Margin="154,382,0,0" VerticalAlignment="Top" Click="buttonReadSchedule" Width="98" Height="23" Visibility="Hidden"/>
+        <Button Content="Show Notification" HorizontalAlignment="Left" Margin="257,382,0,0" VerticalAlignment="Top" Click="buttonShowNotification" Height="24" Width="111" Visibility="Hidden"/>
     </Grid>
+
 </Window>
+

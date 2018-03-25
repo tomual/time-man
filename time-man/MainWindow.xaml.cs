@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.SQLite;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -68,7 +69,7 @@ namespace time_man
 
             dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
             dispatcherTimer.Tick += new EventHandler(tick);
-            dispatcherTimer.Interval = new TimeSpan(0, 0, 5);
+            dispatcherTimer.Interval = new TimeSpan(0, 1, 0);
             dispatcherTimer.Start();
 
         }
@@ -77,14 +78,11 @@ namespace time_man
         {
             foreach(var item in items)
             {
-                Console.WriteLine("ITEM: " + item.Time);
-                Console.WriteLine("NOW: " + DateTime.Now.ToString("hhmm"));
-                
-                if(item.Time.ToString().Equals(DateTime.Now.ToString("hhmm")))
+                TimeSpan now = DateTime.Now.TimeOfDay;
+                if(getTime(item.Time).Equals(getTime(now)) && item.Active)
                 {
                     showNotification();
                 }
-
             }
         }
 
@@ -93,14 +91,15 @@ namespace time_man
             SQLiteConnection.CreateFile("db.sqlite");
             db = new SQLiteConnection("Data Source=db.sqlite;Version=3;");
             db.Open();
-            String sql = "CREATE TABLE schedule (id integer primary key, active INT, time INT, label VARCHAR(20))";
+            String sql = "CREATE TABLE schedule (id integer primary key, active INT, time VARCHAR(20), label VARCHAR(20))";
             SQLiteCommand command = new SQLiteCommand(sql, db);
             command.ExecuteNonQuery();
         }
 
         private void addItem(ScheduleItem scheduleItem)
         {
-            String sql = String.Format("INSERT INTO schedule (label, time, active) values ('{0}', '{1}', '{2}')", scheduleItem.Label, scheduleItem.Time, scheduleItem.Active ? 1 : 0);
+            String timeString = string.Format("{0:00}:{1:00}", scheduleItem.Time.Hours, scheduleItem.Time.Minutes);
+            String sql = String.Format("INSERT INTO schedule (label, time, active) values ('{0}', '{1}', '{2}')", scheduleItem.Label, timeString, scheduleItem.Active ? 1 : 0);
             SQLiteCommand command = new SQLiteCommand(sql, db);
             command.ExecuteNonQuery();
             scheduleItem.Id = db.LastInsertRowId;
@@ -109,6 +108,16 @@ namespace time_man
         private void deleteItem(long id)
         {
             String sql = String.Format("DELETE FROM schedule WHERE id = {0}", id);
+            SQLiteCommand command = new SQLiteCommand(sql, db);
+            command.ExecuteNonQuery();
+        }
+
+        private void updateItem(long id, ScheduleItem scheduleItem)
+        {
+            Console.WriteLine(id);
+            Console.WriteLine(scheduleItem.Active);
+            String sql = String.Format("UPDATE schedule SET active = {0} WHERE id = {1}", scheduleItem.Active ? 1 : 0, id);
+            Console.WriteLine(sql);
             SQLiteCommand command = new SQLiteCommand(sql, db);
             command.ExecuteNonQuery();
         }
@@ -123,12 +132,26 @@ namespace time_man
                 Console.WriteLine(String.Format("{0} {1} {2}", reader["active"], reader["time"], reader["label"]));
                 long id = long.Parse(reader["Id"].ToString());
                 String label = reader["label"].ToString();
-                int time = int.Parse(reader["time"].ToString());
-                bool active = reader["active"].Equals("1") ? true : false;
-                ScheduleItem scheduleItem = new ScheduleItem() { Id = id, Label = label, Time = time, Active = true };
+
+                // Time
+                String[] stringTime = reader["time"].ToString().Split(':');
+                int hour = int.Parse(stringTime[0]);
+                int minute = int.Parse(stringTime[1]);
+                TimeSpan time = new TimeSpan(hour, minute, 0);
+
+                bool active = reader["active"].Equals(1) ? true : false;
+                ScheduleItem scheduleItem = new ScheduleItem() { Id = id, Label = label, Time = time, Active = active };
 
                 items.Add(scheduleItem);
             }
+        }
+
+        private void reloadView()
+        {
+            items = new ObservableCollection<ScheduleItem>();
+            listView.ItemsSource = items;
+
+            loadDatabase();
         }
 
         private void readDatabase()
@@ -140,11 +163,21 @@ namespace time_man
             {
                 Console.WriteLine(String.Format("{0} {1} {2} {3}", reader["id"], reader["active"], reader["time"], reader["label"]));
             }
+
+            foreach(var item in items)
+            {
+                Console.WriteLine(item.Active);
+            }
         }
 
         private void buttonShowNotification(object sender, RoutedEventArgs e)
         {
             showNotification();
+        }
+
+        private String getTime(TimeSpan timeSpan)
+        {
+            return string.Format("{0:00}:{1:00}", timeSpan.Hours, timeSpan.Minutes);
         }
 
         private void showNotification()
@@ -153,26 +186,63 @@ namespace time_man
             Console.WriteLine("Show a notification");
         }
 
-        protected override void OnClosing(CancelEventArgs e)
+        //protected override void OnClosing(CancelEventArgs e)
+        //{
+        //    e.Cancel = true;
+        //    this.Hide();
+        //    base.OnClosing(e);
+        //}
+
+        private void resetForm()
         {
-            e.Cancel = true;
-            this.Hide();
-            base.OnClosing(e);
+            hourTextBox.BorderBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FFABADB3"));
+            minuteTextBox.BorderBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FFABADB3"));
+            labelTextBox.BorderBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FFABADB3"));
+        }
+
+        private bool validateForm()
+        {
+            resetForm();
+            bool isValid = true;
+            int hour;
+            int minute;
+            if (int.TryParse(hourTextBox.Text, out hour) && int.TryParse(minuteTextBox.Text, out minute))
+            {
+                hour = int.Parse(hourTextBox.Text);
+                minute = int.Parse(minuteTextBox.Text);
+                if (hour > 24 || hour < 0 || minute > 59 || minute < 0)
+                {
+                    hourTextBox.BorderBrush = Brushes.IndianRed;
+                    minuteTextBox.BorderBrush = Brushes.IndianRed;
+                    isValid = false;
+                }
+            }
+            else
+            {
+                hourTextBox.BorderBrush = Brushes.IndianRed;
+                minuteTextBox.BorderBrush = Brushes.IndianRed;
+                isValid = false;
+
+            }
+            if(String.IsNullOrEmpty(labelTextBox.Text))
+            {
+                labelTextBox.BorderBrush = Brushes.IndianRed;
+                isValid = false;
+            }
+            return isValid;
         }
 
         private void buttonAddItem(object sender, RoutedEventArgs e)
         {
+            if(!validateForm())
+            {
+                return;
+            }
             String label = labelTextBox.Text.ToString();
-            int time;
-            if (int.TryParse(timeTextBox.Text, out time))
-            {
-                time = int.Parse(timeTextBox.Text);
-            }
-            else
-            {
-                time = 0;
-            }
-            ScheduleItem scheduleItem = new ScheduleItem() { Label = label, Time = time, Active = true };
+            int hour = int.Parse(hourTextBox.Text);
+            int minute = int.Parse(minuteTextBox.Text);
+            TimeSpan timeSpan = new TimeSpan(hour, minute, 0);
+            ScheduleItem scheduleItem = new ScheduleItem() { Label = label, Time = timeSpan, Active = true };
             addItem(scheduleItem);
             items.Add(scheduleItem);
             Console.Write("add:");
@@ -187,20 +257,75 @@ namespace time_man
         private void deleteSelected(object sender, RoutedEventArgs e)
         {
             int index = listView.SelectedIndex;
+            if(index < 0)
+            {
+                return;
+            }
             ScheduleItem scheduleItem = items.ElementAt(index);
             deleteItem(scheduleItem.Id);
             items.RemoveAt(index);
             Console.Write("delete:");
             Console.WriteLine(scheduleItem.Id);
         }
-    }
 
+        private void toggleActiveSelected(object sender, RoutedEventArgs e)
+        {
+            int index = listView.SelectedIndex;
+            if (index < 0)
+            {
+                return;
+            }
+            items.ElementAt(index).Active = !items.ElementAt(index).Active;
+            updateItem(items.ElementAt(index).Id, items.ElementAt(index));
+            reloadView();
+        }
+    }
 
     public class ScheduleItem
     {
         public long Id { get; set; }
         public string Label { get; set; }
-        public int Time { get; set; }
+        public TimeSpan Time { get; set; }
         public bool Active{ get; set; }
     }
+
+    public class BoolToStringConverter : IValueConverter
+    {
+        public char Separator { get; set; } = ';';
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var strings = ((string)parameter).Split(Separator);
+            var trueString = strings[0];
+            var falseString = strings[1];
+
+            var boolValue = (bool)value;
+            if (boolValue == true)
+            {
+                return trueString;
+            }
+            else
+            {
+                return falseString;
+            }
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            var strings = ((string)parameter).Split(Separator);
+            var trueString = strings[0];
+            var falseString = strings[1];
+
+            var stringValue = (string)value;
+            if (stringValue == trueString)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
+
 }
