@@ -1,23 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Data.SQLite;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Forms;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.Windows.Threading;
 
 namespace time_man
@@ -32,6 +23,8 @@ namespace time_man
         ObservableCollection<ScheduleItem> items;
         SQLiteConnection db;
         DispatcherTimer dispatcherTimer;
+        bool waitingForFirst = true;
+        bool menuOpen = false;
 
         public MainWindow()
         {
@@ -66,26 +59,57 @@ namespace time_man
                     this.Show();
                     this.WindowState = WindowState.Normal;
                 };
+            ContextMenu contextMenu = new ContextMenu();
+            contextMenu.MenuItems.Add("Open", openWindow);
+            contextMenu.MenuItems.Add("Exit", closeApplication);
+            notifyIcon.ContextMenu = contextMenu;
+
 
             dispatcherTimer = new System.Windows.Threading.DispatcherTimer();
-            dispatcherTimer.Tick += new EventHandler(tick);
-            dispatcherTimer.Interval = new TimeSpan(0, 1, 0);
+            dispatcherTimer.Tick += new EventHandler(notifyTasksForNow);
+            dispatcherTimer.Interval = new TimeSpan(0, 0, 10);
             dispatcherTimer.Start();
 
         }
 
-        private void tick(object sender, EventArgs e)
+        private void openWindow(object sender, EventArgs e)
         {
-            foreach(var item in items)
+            this.Show();
+            this.WindowState = WindowState.Normal;
+        }
+
+        private void closeApplication(object sender, EventArgs e)
+        {
+            notifyIcon.Dispose();
+            System.Windows.Application.Current.Shutdown();
+        }
+
+        /// <summary>
+        /// Notifies for tasks with time matching now
+        /// </summary>
+        private void notifyTasksForNow(object sender, EventArgs e)
+        {
+            foreach (var item in items)
             {
                 TimeSpan now = DateTime.Now.TimeOfDay;
-                if(getTime(item.Time).Equals(getTime(now)) && item.Active)
+                if (getTime(item.Time).Equals(getTime(now)) && item.Active)
                 {
-                    showNotification();
+                    showNotification(item.Label, "Task for " + getTime(item.Time));
+                    if (waitingForFirst)
+                    {
+                        waitingForFirst = false;
+
+                        dispatcherTimer.Stop();
+                        dispatcherTimer.Interval = new TimeSpan(0, 1, 0);
+                        dispatcherTimer.Start();
+                    }
                 }
             }
         }
 
+        /// <summary>
+        /// Create SQLite table
+        /// </summary>
         private void initDatabase()
         {
             SQLiteConnection.CreateFile("db.sqlite");
@@ -96,15 +120,21 @@ namespace time_man
             command.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Add schedule item to database
+        /// </summary>
         private void addItem(ScheduleItem scheduleItem)
         {
-            String timeString = string.Format("{0:00}:{1:00}", scheduleItem.Time.Hours, scheduleItem.Time.Minutes);
+            String timeString = getTime(scheduleItem.Time);
             String sql = String.Format("INSERT INTO schedule (label, time, active) values ('{0}', '{1}', '{2}')", scheduleItem.Label, timeString, scheduleItem.Active ? 1 : 0);
             SQLiteCommand command = new SQLiteCommand(sql, db);
             command.ExecuteNonQuery();
             scheduleItem.Id = db.LastInsertRowId;
         }
 
+        /// <summary>
+        /// Delete schedule item from database
+        /// </summary>
         private void deleteItem(long id)
         {
             String sql = String.Format("DELETE FROM schedule WHERE id = {0}", id);
@@ -112,6 +142,9 @@ namespace time_man
             command.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Update shcedule item in database
+        /// </summary>
         private void updateItem(long id, ScheduleItem scheduleItem)
         {
             Console.WriteLine(id);
@@ -122,6 +155,9 @@ namespace time_man
             command.ExecuteNonQuery();
         }
 
+        /// <summary>
+        /// Load schedule items from database
+        /// </summary>
         private void loadDatabase()
         {
             String sql = "SELECT * FROM schedule ORDER BY time ASC";
@@ -146,6 +182,9 @@ namespace time_man
             }
         }
 
+        /// <summary>
+        /// Refresh the schedule item table
+        /// </summary>
         private void reloadView()
         {
             items = new ObservableCollection<ScheduleItem>();
@@ -154,6 +193,9 @@ namespace time_man
             loadDatabase();
         }
 
+        /// <summary>
+        /// Print out the database
+        /// </summary>
         private void readDatabase()
         {
             String sql = "SELECT * FROM schedule ORDER BY time ASC";
@@ -164,45 +206,62 @@ namespace time_man
                 Console.WriteLine(String.Format("{0} {1} {2} {3}", reader["id"], reader["active"], reader["time"], reader["label"]));
             }
 
-            foreach(var item in items)
+            foreach (var item in items)
             {
                 Console.WriteLine(item.Active);
             }
         }
 
+        /// <summary>
+        /// Trigger notification
+        /// </summary>
         private void buttonShowNotification(object sender, RoutedEventArgs e)
         {
-            showNotification();
+            showNotification("Test Notification", "Test message");
         }
 
+        /// <summary>
+        /// String format of TimeSpan object
+        /// </summary>
         private String getTime(TimeSpan timeSpan)
         {
             return string.Format("{0:00}:{1:00}", timeSpan.Hours, timeSpan.Minutes);
         }
 
-        private void showNotification()
+        /// <summary>
+        /// Display window notification
+        /// </summary>
+        private void showNotification(String title, String message)
         {
-            notifyIcon.ShowBalloonTip(1, "Hello World", "Description message", ToolTipIcon.Info);
-            Console.WriteLine("Show a notification");
+            notifyIcon.ShowBalloonTip(1, title, message, ToolTipIcon.Info);
         }
 
-        //protected override void OnClosing(CancelEventArgs e)
-        //{
-        //    e.Cancel = true;
-        //    this.Hide();
-        //    base.OnClosing(e);
-        //}
+        /// <summary>
+        /// Prevent application termination on close
+        /// </summary>
+        protected override void OnClosing(CancelEventArgs e)
+        {
+            e.Cancel = true;
+            this.Hide();
+            base.OnClosing(e);
+        }
 
-        private void resetForm()
+        /// <summary>
+        /// Reset form validation state
+        /// </summary>
+        private void resetFormValidation()
         {
             hourTextBox.BorderBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FFABADB3"));
             minuteTextBox.BorderBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FFABADB3"));
             labelTextBox.BorderBrush = (SolidColorBrush)(new BrushConverter().ConvertFrom("#FFABADB3"));
         }
 
+        /// <summary>
+        /// Validate form to add item
+        /// </summary>
         private bool validateForm()
         {
-            resetForm();
+            resetFormValidation();
             bool isValid = true;
             int hour;
             int minute;
@@ -224,7 +283,7 @@ namespace time_man
                 isValid = false;
 
             }
-            if(String.IsNullOrEmpty(labelTextBox.Text))
+            if (String.IsNullOrEmpty(labelTextBox.Text))
             {
                 labelTextBox.BorderBrush = Brushes.IndianRed;
                 isValid = false;
@@ -232,9 +291,19 @@ namespace time_man
             return isValid;
         }
 
+        private void clearForm()
+        {
+            labelTextBox.Text = "";
+            hourTextBox.Text = "12";
+            minuteTextBox.Text = "00";
+        }
+
+        /// <summary>
+        /// Add item button was clicked
+        /// </summary>
         private void buttonAddItem(object sender, RoutedEventArgs e)
         {
-            if(!validateForm())
+            if (!validateForm())
             {
                 return;
             }
@@ -245,19 +314,26 @@ namespace time_man
             ScheduleItem scheduleItem = new ScheduleItem() { Label = label, Time = timeSpan, Active = true };
             addItem(scheduleItem);
             items.Add(scheduleItem);
+            clearForm();
             Console.Write("add:");
             Console.WriteLine(scheduleItem.Id);
         }
 
+        /// <summary>
+        /// Button for reading database was clicked
+        /// </summary>
         private void buttonReadSchedule(object sender, RoutedEventArgs e)
         {
             readDatabase();
         }
 
+        /// <summary>
+        /// Delete button was clicked
+        /// </summary>
         private void deleteSelected(object sender, RoutedEventArgs e)
         {
             int index = listView.SelectedIndex;
-            if(index < 0)
+            if (index < 0)
             {
                 return;
             }
@@ -268,6 +344,9 @@ namespace time_man
             Console.WriteLine(scheduleItem.Id);
         }
 
+        /// <summary>
+        /// Update item to toggle active
+        /// </summary>
         private void toggleActiveSelected(object sender, RoutedEventArgs e)
         {
             int index = listView.SelectedIndex;
@@ -281,14 +360,20 @@ namespace time_man
         }
     }
 
+    /// <summary>
+    /// Store schedule item data
+    /// </summary>
     public class ScheduleItem
     {
         public long Id { get; set; }
         public string Label { get; set; }
         public TimeSpan Time { get; set; }
-        public bool Active{ get; set; }
+        public bool Active { get; set; }
     }
 
+    /// <summary>
+    /// Converter for table to display active bool as a tick symbol
+    /// </summary>
     public class BoolToStringConverter : IValueConverter
     {
         public char Separator { get; set; } = ';';

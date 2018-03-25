@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:time_man"
         mc:Ignorable="d"
-        Title="MainWindow" Height="427.667" Width="390.501">
+        Title="Time Man" Height="427.667" Width="390.501" Icon="Resources/dolphin.ico">
     <Window.Resources>
         <local:BoolToStringConverter x:Key="BoolToStringConverter" />
     </Window.Resources>
